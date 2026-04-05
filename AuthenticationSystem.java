@@ -1,129 +1,130 @@
 import java.util.Scanner;
+import java.util.InputMismatchException;
 
-class MaximumUsersReachedException extends Exception {
-    public MaximumUsersReachedException(String message) { super(message); }
-}
-class UserNotFoundException extends Exception {
-    public UserNotFoundException(String message) { super(message); }
-}
-class UserAlreadyExistsException extends Exception {
-    public UserAlreadyExistsException(String message) { super(message); }
-}
-class InvalidUsernameException extends Exception {
-    public InvalidUsernameException(String message) { super(message); }
-}
-class InvalidPasswordException extends Exception {
-    public InvalidPasswordException(String message) { super(message); }
-}
-class AuthenticationFailedException extends Exception {
-    public AuthenticationFailedException(String message) { super(message); }
-}
-class MenuInputException extends Exception {
-    public MenuInputException(String message) { super(message); }
-}
+public class AuthSystem {
 
-public class AuthenticationSystem {
+    static class UserLimitExceededException extends Throwable {
+        public UserLimitExceededException(String message) { super(message); }
+    }
+    static class InvalidUsernameException extends Throwable {
+        public InvalidUsernameException(String message) { super(message); }
+    }
+    static class InvalidPasswordException extends Throwable {
+        public InvalidPasswordException(String message) { super(message); }
+    }
+    static class UserNotFoundException extends Throwable {
+        public UserNotFoundException(String message) { super(message); }
+    }
+    static class AuthenticationFailedException extends Throwable {
+        public AuthenticationFailedException(String message) { super(message); }
+    }
+    static class InvalidInputException extends Throwable {
+        public InvalidInputException(String message) { super(message); }
+    }
+
     private static final int MAX_USERS = 15;
     private static String[] usernames = new String[MAX_USERS];
     private static String[] passwords = new String[MAX_USERS];
-    private static String[] forbiddenWords = new String[50];
-    private static int forbiddenCount = 0;
+
+    private static String[] forbiddenWords = new String[100];
+    private static int forbiddenWordsCount = 0;
 
     public static void main(String[] args) {
         initForbiddenWords();
         Scanner scanner = new Scanner(System.in);
-        boolean running = true;
 
-        while (running) {
-            printMenu();
-            String input = scanner.nextLine();
+        while (true) {
+            showMenu();
+            System.out.print("Оберіть дію: ");
 
+            int choice = -1;
             try {
-                int choice = parseNumber(input);
-                switch (choice) {
-                    case 1:
-                        registerUser(scanner);
-                        break;
-                    case 2:
-                        deleteUser(scanner);
-                        break;
-                    case 3:
-                        authenticateUser(scanner);
-                        break;
-                    case 4:
-                        addForbiddenWord(scanner);
-                        break;
-                    case 5:
-                        System.out.println("Завершення роботи програми...");
-                        running = false;
-                        break;
-                    default:
-                        throw new MenuInputException("Оберіть пункт меню від 1 до 5.");
-                }
-            } catch (MenuInputException | InvalidUsernameException | InvalidPasswordException |
-                     MaximumUsersReachedException | UserAlreadyExistsException |
-                     UserNotFoundException | AuthenticationFailedException e) {
-                System.out.println("\n[ПОМИЛКА] " + e.getMessage() + "\n");
+                choice = scanner.nextInt();
+                scanner.nextLine();
+
+                processChoice(choice, scanner);
+
+            } catch (InputMismatchException e) {
+                System.out.println("Помилка: Введено не число! Спробуйте ще раз.");
+                scanner.nextLine();
+            } catch (UserLimitExceededException e) {
+                System.out.println("Помилка реєстрації: " + e.getMessage());
+            } catch (InvalidUsernameException e) {
+                System.out.println("Помилка імені користувача: " + e.getMessage());
+            } catch (InvalidPasswordException e) {
+                System.out.println("Помилка пароля: " + e.getMessage());
+            } catch (UserNotFoundException e) {
+                System.out.println("Помилка пошуку: " + e.getMessage());
+            } catch (AuthenticationFailedException e) {
+                System.out.println("Помилка доступу: " + e.getMessage());
+            } catch (InvalidInputException e) {
+                System.out.println("Помилка вводу: " + e.getMessage());
             }
         }
-        scanner.close();
     }
 
-
-    private static void printMenu() {
-        System.out.println("=== СИСТЕМА АУТЕНТИФІКАЦІЇ ===");
-        System.out.println("1. Зареєструвати нового користувача");
-        System.out.println("2. Видалити користувача");
-        System.out.println("3. Виконати дію (Аутентифікація)");
-        System.out.println("4. Додати заборонене слово для паролів (*)");
-        System.out.println("5. Вихід");
-        System.out.print("Ваш вибір: ");
+    private static void showMenu() {
+        System.out.println("1.Зареєструвати нового користувача");
+        System.out.println("2.Видалити користувача");
+        System.out.println("3.Виконати дію (Аутентифікація)");
+        System.out.println("4.Додати заборонене слово для пароля");
+        System.out.println("5.Вийти з програми");
     }
 
-    private static int parseNumber(String str) throws MenuInputException {
-        if (str == null || str.length() == 0) {
-            throw new MenuInputException("Ввід не може бути порожнім.");
+    private static void processChoice(int choice, Scanner scanner) throws
+            UserLimitExceededException, InvalidUsernameException, InvalidPasswordException,
+            UserNotFoundException, AuthenticationFailedException, InvalidInputException {
+
+        if (choice == 1) {
+            System.out.print("Введіть ім'я користувача: ");
+            String username = scanner.nextLine();
+            System.out.print("Введіть пароль: ");
+            String password = scanner.nextLine();
+            registerUser(username, password);
+            System.out.println("Користувача успішно зареєстровано!");
+
+        } else if (choice == 2) {
+            System.out.print("Введіть ім'я користувача для видалення: ");
+            String username = scanner.nextLine();
+            deleteUser(username);
+            System.out.println("Користувача успішно видалено!");
+
+        } else if (choice == 3) {
+            System.out.print("Введіть ім'я користувача: ");
+            String username = scanner.nextLine();
+            System.out.print("Введіть пароль: ");
+            String password = scanner.nextLine();
+            authenticateUser(username, password);
+            System.out.println("Користувача було аутентифіковано! Доступ дозволено.");
+
+        } else if (choice == 4) {
+            System.out.print("Введіть нове заборонене слово: ");
+            String word = scanner.nextLine();
+            addForbiddenWord(word);
+            System.out.println("Слово додано до списку заборонених.");
+
+        } else if (choice == 5) {
+            System.out.println("Дякуємо за використання системи.До побачення!");
+            System.exit(0);
+        } else {
+            throw new InvalidInputException("Такого пункту меню не існує.");
         }
-        int result = 0;
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c < '0' || c > '9') {
-                throw new MenuInputException("Потрібно ввести число.");
-            }
-            result = result * 10 + (c - '0');
-        }
-        return result;
     }
 
-
-    private static void registerUser(Scanner scanner) throws MaximumUsersReachedException, InvalidUsernameException, InvalidPasswordException, UserAlreadyExistsException {
-        int emptySlot = findEmptySlot();
-        if (emptySlot == -1) {
-            throw new MaximumUsersReachedException("Досягнуто ліміт користувачів (15). Видаліть когось для реєстрації нового.");
+    private static void registerUser(String username, String password) throws UserLimitExceededException, InvalidUsernameException, InvalidPasswordException {
+        int freeIndex = findFreeSlot();
+        if (freeIndex == -1) {
+            throw new UserLimitExceededException("Досягнуто ліміт. Більше 15 користувачів додати не можна.");
         }
 
-        System.out.print("Введіть ім'я користувача: ");
-        String username = scanner.nextLine();
         validateUsername(username);
-
-        if (isUserExists(username)) {
-            throw new UserAlreadyExistsException("Користувач з таким ім'ям вже існує.");
-        }
-
-        System.out.print("Введіть пароль: ");
-        String password = scanner.nextLine();
         validatePassword(password);
 
-        usernames[emptySlot] = username;
-        passwords[emptySlot] = password;
-        System.out.println("\n[УСПІХ] Користувача " + username + " успішно зареєстровано!\n");
+        usernames[freeIndex] = username;
+        passwords[freeIndex] = password;
     }
 
-    private static void deleteUser(Scanner scanner) throws UserNotFoundException, InvalidUsernameException {
-        System.out.print("Введіть ім'я користувача для видалення: ");
-        String username = scanner.nextLine();
-        validateUsername(username);
-
+    private static void deleteUser(String username) throws UserNotFoundException {
         int index = findUserIndex(username);
         if (index == -1) {
             throw new UserNotFoundException("Користувача з ім'ям '" + username + "' не знайдено.");
@@ -131,137 +132,88 @@ public class AuthenticationSystem {
 
         usernames[index] = null;
         passwords[index] = null;
-        System.out.println("\n[УСПІХ] Користувача видалено. З'явилось нове вільне місце.\n");
     }
 
-    private static void authenticateUser(Scanner scanner) throws InvalidUsernameException, AuthenticationFailedException {
-        System.out.print("Логін: ");
-        String username = scanner.nextLine();
-        System.out.print("Пароль: ");
-        String password = scanner.nextLine();
-
+    private static void authenticateUser(String username, String password) throws AuthenticationFailedException {
         int index = findUserIndex(username);
-
-        if (index == -1 || !passwords[index].equals(password)) {
-            throw new AuthenticationFailedException("Неправильне ім'я користувача або пароль.");
+        if (index == -1) {
+            throw new AuthenticationFailedException("Невірне ім'я користувача або пароль.");
         }
 
-        System.out.println("\n[УСПІХ] Користувача " + username + " успішно аутентифіковано. Доступ до дії дозволено!\n");
+        if (!passwords[index].equals(password)) {
+            throw new AuthenticationFailedException("Невірне ім'я користувача або пароль.");
+        }
     }
 
-
-    private static void initForbiddenWords() {
-        forbiddenWords[0] = "admin";
-        forbiddenWords[1] = "pass";
-        forbiddenWords[2] = "password";
-        forbiddenWords[3] = "qwerty";
-        forbiddenWords[4] = "ytrewq";
-        forbiddenCount = 5;
-    }
-
-    private static void addForbiddenWord(Scanner scanner) throws MenuInputException {
-        if (forbiddenCount >= forbiddenWords.length) {
-            throw new MenuInputException("Досягнуто ліміт заборонених слів.");
+    private static void addForbiddenWord(String word) throws InvalidInputException {
+        if (word == null || word.trim().isEmpty()) {
+            throw new InvalidInputException("Заборонене слово не може бути порожнім.");
         }
-        System.out.print("Введіть нове заборонене слово: ");
-        String word = scanner.nextLine();
-        if (word.length() == 0 || containsSpace(word)) {
-            throw new MenuInputException("Слово не може бути порожнім або містити пробіли.");
+        if (forbiddenWordsCount >= forbiddenWords.length) {
+            throw new InvalidInputException("Список заборонених слів переповнений.");
         }
-        forbiddenWords[forbiddenCount] = word.toLowerCase();
-        forbiddenCount++;
-        System.out.println("\n[УСПІХ] Заборонене слово додано.\n");
+        forbiddenWords[forbiddenWordsCount] = word;
+        forbiddenWordsCount++;
     }
 
     private static void validateUsername(String username) throws InvalidUsernameException {
-        if (username == null || username.length() < 5) {
-            throw new InvalidUsernameException("Ім'я користувача має складатись не менше ніж з 5 символів.");
+        if (username.length() < 5) {
+            throw new InvalidUsernameException("Ім'я має складатись не менше ніж з 5 символів.");
         }
-        if (containsSpace(username)) {
-            throw new InvalidUsernameException("Ім'я користувача не має містити пробілів.");
+        if (username.indexOf(' ') != -1) {
+            throw new InvalidUsernameException("Ім'я не має містити пробіли.");
+        }
+        if (findUserIndex(username) != -1) {
+            throw new InvalidUsernameException("Користувач з таким ім'ям вже існує.");
         }
     }
 
     private static void validatePassword(String password) throws InvalidPasswordException {
-        if (password == null || password.length() < 10) {
+        if (password.length() < 10) {
             throw new InvalidPasswordException("Довжина паролю має бути не менше 10 символів.");
         }
-        if (containsSpace(password)) {
+        if (password.indexOf(' ') != -1) {
             throw new InvalidPasswordException("Пароль не має містити пробілів.");
         }
 
-        int digitsCount = 0;
+        int digitCount = 0;
         int specialCount = 0;
-        String specialChars = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~";
 
         for (int i = 0; i < password.length(); i++) {
             char c = password.charAt(i);
 
-            if (c >= '0' && c <= '9') {
-                digitsCount++;
-            } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-
-            } else if (customIndexOf(specialChars, c) != -1) {
+            if (isDigit(c)) {
+                digitCount++;
+            } else if (isLatinLetter(c)) {
+            } else if (isSpecialChar(c)) {
                 specialCount++;
             } else {
-                throw new InvalidPasswordException("Пароль містить недопустимий символ: '" + c + "'. Дозволені лише латинські символи, цифри та спецсимволи.");
+                throw new InvalidPasswordException("Пароль містить недопустимий символ: '" + c + "'. Дозволені лише латиниця, цифри та спецсимволи.");
             }
         }
 
-        if (digitsCount < 3) {
+        if (digitCount < 3) {
             throw new InvalidPasswordException("Пароль має містити хоча б 3 цифри.");
         }
         if (specialCount < 1) {
             throw new InvalidPasswordException("Пароль має містити хоча б 1 спеціальний символ.");
         }
 
-        String lowerPassword = password.toLowerCase();
-        for (int i = 0; i < forbiddenCount; i++) {
-            if (customContains(lowerPassword, forbiddenWords[i])) {
+        String lowerCasePassword = password.toLowerCase();
+        for (int i = 0; i < forbiddenWordsCount; i++) {
+            if (lowerCasePassword.indexOf(forbiddenWords[i].toLowerCase()) != -1) {
                 throw new InvalidPasswordException("Пароль містить заборонене слово: " + forbiddenWords[i]);
             }
         }
     }
 
-
-    private static boolean containsSpace(String str) {
-        return customIndexOf(str, ' ') != -1;
-    }
-
-    private static int customIndexOf(String str, char target) {
-        for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == target) return i;
-        }
-        return -1;
-    }
-
-    private static boolean customContains(String mainStr, String subStr) {
-        if (subStr.length() > mainStr.length()) return false;
-
-        for (int i = 0; i <= mainStr.length() - subStr.length(); i++) {
-            boolean match = true;
-            for (int j = 0; j < subStr.length(); j++) {
-                if (mainStr.charAt(i + j) != subStr.charAt(j)) {
-                    match = false;
-                    break;
-                }
-            }
-            if (match) return true;
-        }
-        return false;
-    }
-
-    private static int findEmptySlot() {
+    private static int findFreeSlot() {
         for (int i = 0; i < MAX_USERS; i++) {
             if (usernames[i] == null) {
                 return i;
             }
         }
         return -1;
-    }
-
-    private static boolean isUserExists(String username) {
-        return findUserIndex(username) != -1;
     }
 
     private static int findUserIndex(String username) {
@@ -271,5 +223,26 @@ public class AuthenticationSystem {
             }
         }
         return -1;
+    }
+
+    private static void initForbiddenWords() {
+        String[] initialWords = {"admin", "pass", "password", "qwerty", "ytrewq"};
+        for (int i = 0; i < initialWords.length; i++) {
+            forbiddenWords[i] = initialWords[i];
+            forbiddenWordsCount++;
+        }
+    }
+
+    private static boolean isLatinLetter(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    private static boolean isDigit(char c) {
+        return (c >= '0' && c <= '9');
+    }
+
+    private static boolean isSpecialChar(char c) {
+        String specialChars = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~";
+        return specialChars.indexOf(c) != -1;
     }
 }
